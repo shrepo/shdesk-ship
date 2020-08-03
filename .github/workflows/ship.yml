@@ -1,0 +1,11 @@
+name: ship
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hello
+        run: |
+          echo "Hello World! How are you? "
