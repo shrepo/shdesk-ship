@@ -2,10 +2,76 @@ name: ship
 
 on: workflow_dispatch
 
+inputs:
+  ver:
+    description: 'version number'
+    required: true
+  debug:
+    description: 'isDebug'
+    required: false
+    default: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Hello
+      - uses: actions/checkout@v2
+        with:
+          repository: 'shrepo/shdesk'
+          token: ${{ secrets.GH_TOKEN_SHDESKSHIP }}
+          persist-credentials: false
+          submodules: true
+          ref: 'master'
+
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '14'
+
+      # - name: Dump GitHub context
+      #   run: |
+      #     echo ${{ toJson(github) }}
+
+      - name: Notify Start
+        env:
+          JOB_URL: 'https://github.com/${{ github.repository }}/commit/${{ github.sha }}/checks'
+          TELEGRAM_IDS: '${{ secrets.TELEGRAM_CHAT_AMEEN }},${{ secrets.TELEGRAM_CHAT_HASHMI }}'
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          GH_RUN_NO: ${{ github.run_number }}
         run: |
-          echo "Hello World! How are you? "
+          echo "Job URL - $JOB_URL"
+          echo "TELEGRAM_TOKEN - $TELEGRAM_TOKEN"
+          echo "GH_RUN_NO - $GH_RUN_NO"
+          echo "::set-env name=start_time::`date +%s`"
+          node ./scripts/notifyTelegram.js start
+
+      - name: install wine
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install wine64 wine32
+          wine --version
+
+      - run: yarn install --frozen-lockfile
+
+      # - run: yarn test
+
+      - name: ship release
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN_SHDESKSHIP }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN_SHDESKSHIP }}
+          REACT_APP_FIREBASE_KEY: ${{ secrets.REACT_APP_FIREBASE_KEY }}
+          REACT_APP_FIREBASE_DOMAIN: ${{ secrets.REACT_APP_FIREBASE_DOMAIN }}
+          REACT_APP_FIREBASE_DATABASE: ${{ secrets.REACT_APP_FIREBASE_DATABASE }}
+          REACT_APP_FIREBASE_PROJECT_ID: ${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }}
+          REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ secrets.REACT_APP_FIREBASE_STORAGE_BUCKET }}
+          REACT_APP_FIREBASE_SENDER_ID: ${{ secrets.REACT_APP_FIREBASE_SENDER_ID }}
+          REACT_APP_FIREBASE_APP_ID: ${{ secrets.REACT_APP_FIREBASE_APP_ID }}
+        run: yarn run ship
+
+      - name: Notify End
+        if: ${{ always() }}
+        env:
+          TELEGRAM_IDS: '${{ secrets.TELEGRAM_CHAT_AMEEN }},${{ secrets.TELEGRAM_CHAT_HASHMI }}'
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          GH_JOB_STATUS: ${{ job.status }}
+        run: node ./scripts/notifyTelegram.js end
