@@ -1,0 +1,14 @@
+<html>
+  <body>
+    <script>
+      // pass with open param eg: http://sdsdf.html?open=http://google.com
+      const queryString = window.location.search
+      console.log(queryString)
+      const urlParams = new URLSearchParams(queryString)
+      const openLink = urlParams.get('open')
+      console.log(openLink)
+      if (openLink) window.location.href = openLink
+    </script>
+    <h1>Open Link</h1>
+  </body>
+</html>
