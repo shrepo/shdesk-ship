@@ -1,15 +1,15 @@
 name: ship
 
-on: workflow_dispatch
-
-inputs:
-  ver:
-    description: 'version number'
-    required: true
-  debug:
-    description: 'isDebug'
-    required: false
-    default: false
+on:
+  workflow_dispatch:
+    inputs:
+      ver:
+        description: 'version number'
+        required: true
+      debug:
+        description: 'isDebug'
+        required: false
+        default: 'false'
 
 jobs:
   build:
@@ -25,7 +25,7 @@ jobs:
 
       - uses: actions/setup-node@v2-beta
         with:
-          node-version: '14'
+          node-version: '12'
 
       # - name: Dump GitHub context
       #   run: |
@@ -51,11 +51,13 @@ jobs:
           sudo apt-get install wine64 wine32
           wine --version
 
-      - run: yarn install --frozen-lockfile
+      - name: yarn install
+        run: |
+          yarn install --frozen-lockfile
 
       # - run: yarn test
 
-      - name: ship release
+      - name: ship desktop
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN_SHDESKSHIP }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_SHDESKSHIP }}
@@ -66,7 +68,13 @@ jobs:
           REACT_APP_FIREBASE_STORAGE_BUCKET: ${{ secrets.REACT_APP_FIREBASE_STORAGE_BUCKET }}
           REACT_APP_FIREBASE_SENDER_ID: ${{ secrets.REACT_APP_FIREBASE_SENDER_ID }}
           REACT_APP_FIREBASE_APP_ID: ${{ secrets.REACT_APP_FIREBASE_APP_ID }}
-        run: yarn run ship
+        run: yarn run ship-desk
+
+      # - name: ship expo
+      #   run: |
+      #     yarn add expo-cli --ignore-workspace-root-check
+      #     ./node_modules/.bin/expo login -u ${{ secrets.EXPO_USERNAME }} -p ${{ secrets.EXPO_PASS }}
+      #     yarn run ship-expo
 
       - name: Notify End
         if: ${{ always() }}
